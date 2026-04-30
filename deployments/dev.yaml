@@ -1,4 +1,4 @@
-template-file-path: ./templates/iam_lab.yaml
+template-file-path: ./templates/iam-lab.yaml
 parameters: {}
 tags:
   - key: Environment
