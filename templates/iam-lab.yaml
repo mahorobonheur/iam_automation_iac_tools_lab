@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  IAM automation lab stack. Creates one-time password secret, IAM groups with
+  S3 and EC2 permissions, and three IAM users with console access.
+
+Resources:
+  OneTimePasswordSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: iam-lab/one-time-user-password
+      Description: One-time password used for all IAM lab users.
+      GenerateSecretString:
+        SecretStringTemplate: '{"password":""}'
+        GenerateStringKey: password
+        PasswordLength: 20
+        ExcludePunctuation: true
+        RequireEachIncludedType: true
+
+  S3UserGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: iam-lab-s3-group
+      ManagedPolicyArns:
+        - !Ref S3ListBucketsPolicy
+
+  EC2UserGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: iam-lab-ec2-group
+      ManagedPolicyArns:
+        - !Ref EC2LabPolicy
+
+  S3ListBucketsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: iam-lab-s3-list-buckets-policy
+      Description: Allows listing S3 buckets only.
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ListBucketsOnly
+            Effect: Allow
+            Action:
+              - s3:ListAllMyBuckets
+            Resource: '*'
+
+  EC2LabPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: iam-lab-ec2-access-policy
+      Description: Allows listing EC2 instances and creating EC2 instances.
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DescribeEc2ForConsole
+            Effect: Allow
+            Action:
+              - ec2:DescribeInstances
+              - ec2:DescribeImages
+              - ec2:DescribeSubnets
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeKeyPairs
+              - ec2:DescribeVpcs
+            Resource: '*'
+          - Sid: AllowRunInstances
+            Effect: Allow
+            Action:
+              - ec2:RunInstances
+              - ec2:CreateTags
+            Resource: '*'
+
+  Ec2User1:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: ec2-user1
+      Groups:
+        - !Ref EC2UserGroup
+      LoginProfile:
+        Password: !Sub "{{resolve:secretsmanager:${OneTimePasswordSecret}:SecretString:password}}"
+        PasswordResetRequired: true
+
+  Ec2User2:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: ec2-user2
+      Groups:
+        - !Ref EC2UserGroup
+      LoginProfile:
+        Password: !Sub "{{resolve:secretsmanager:${OneTimePasswordSecret}:SecretString:password}}"
+        PasswordResetRequired: true
+
+  S3User:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: s3-user
+      Groups:
+        - !Ref S3UserGroup
+      LoginProfile:
+        Password: !Sub "{{resolve:secretsmanager:${OneTimePasswordSecret}:SecretString:password}}"
+        PasswordResetRequired: true
+
+Outputs:
+  OneTimePasswordSecretArn:
+    Description: ARN of the generated one-time password secret.
+    Value: !Ref OneTimePasswordSecret
+
+  S3GroupName:
+    Description: IAM group for S3 bucket-list permissions.
+    Value: !Ref S3UserGroup
+
+  EC2GroupName:
+    Description: IAM group for EC2 list/create permissions.
+    Value: !Ref EC2UserGroup
+
+  Ec2User1Name:
+    Description: IAM user assigned to EC2 group.
+    Value: !Ref Ec2User1
+
+  Ec2User2Name:
+    Description: IAM user assigned to EC2 group.
+    Value: !Ref Ec2User2
+
+  S3UserName:
+    Description: IAM user assigned to S3 group.
+    Value: !Ref S3User

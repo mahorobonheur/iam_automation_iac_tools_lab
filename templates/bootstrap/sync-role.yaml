@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Bootstrap stack: creates the IAM role that CloudFormation Git sync will assume
+  to read from GitHub via CodeConnections and deploy the IAM automation lab stack.
+
+Parameters:
+  ConnectionArn:
+    Type: String
+    Description: ARN of the CodeConnections connection to GitHub.
+    AllowedPattern: '^arn:aws:codeconnections:[a-z0-9-]+:\d{12}:connection/[a-f0-9-]+$'
+
+  RoleName:
+    Type: String
+    Default: lab-cfn-git-sync-role
+    Description: Name of the GitSync role.
+
+Resources:
+  GitSyncRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: Role assumed by CloudFormation for Git sync deployments of the IAM automation lab.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: UseGitHubConnection
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codeconnections:UseConnection
+                  - codestar-connections:UseConnection
+                Resource: !Ref ConnectionArn
+
+        - PolicyName: ManageCloudFormationStacks
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:GetTemplate
+                  - cloudformation:ListStacks
+                  - cloudformation:ListStackResources
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:DeleteStack
+                Resource: '*'
+
+        - PolicyName: DeployIamResources
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:CreateUser
+                  - iam:DeleteUser
+                  - iam:GetUser
+                  - iam:UpdateUser
+                  - iam:CreateGroup
+                  - iam:DeleteGroup
+                  - iam:GetGroup
+                  - iam:AddUserToGroup
+                  - iam:RemoveUserFromGroup
+                  - iam:CreateLoginProfile
+                  - iam:DeleteLoginProfile
+                  - iam:UpdateLoginProfile
+                  - iam:GetLoginProfile
+                  - iam:CreatePolicy
+                  - iam:DeletePolicy
+                  - iam:GetPolicy
+                  - iam:CreatePolicyVersion
+                  - iam:DeletePolicyVersion
+                  - iam:ListPolicyVersions
+                  - iam:AttachGroupPolicy
+                  - iam:DetachGroupPolicy
+                  - iam:PutGroupPolicy
+                  - iam:DeleteGroupPolicy
+                  - iam:GetGroupPolicy
+                  - iam:ListAttachedGroupPolicies
+                  - iam:TagUser
+                  - iam:UntagUser
+                  - iam:TagPolicy
+                  - iam:UntagPolicy
+                Resource: '*'
+
+        - PolicyName: ManageOneTimePasswordSecret
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:CreateSecret
+                  - secretsmanager:DeleteSecret
+                  - secretsmanager:DescribeSecret
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:GetRandomPassword
+                  - secretsmanager:UpdateSecret
+                  - secretsmanager:TagResource
+                  - secretsmanager:UntagResource
+                Resource: '*'
+
+Outputs:
+  GitSyncRoleArn:
+    Description: ARN of the GitSync IAM role; use this when creating the Git-synced stack.
+    Value: !GetAtt GitSyncRole.Arn
+    Export:
+      Name: lab-cfn-git-sync-role-arn
