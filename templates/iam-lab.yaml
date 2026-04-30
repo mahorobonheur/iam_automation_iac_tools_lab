@@ -48,7 +48,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName: iam-lab-ec2-access-policy
-      Description: Allows listing EC2 instances and creating EC2 instances.
+      Description: Allows describing EC2 resources (read-only) for the EC2 group.
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -61,12 +61,6 @@ Resources:
               - ec2:DescribeSecurityGroups
               - ec2:DescribeKeyPairs
               - ec2:DescribeVpcs
-            Resource: '*'
-          - Sid: AllowRunInstances
-            Effect: Allow
-            Action:
-              - ec2:RunInstances
-              - ec2:CreateTags
             Resource: '*'
 
   Ec2User1:
@@ -88,6 +82,20 @@ Resources:
       LoginProfile:
         Password: !Sub "{{resolve:secretsmanager:${OneTimePasswordSecret}:SecretString:password}}"
         PasswordResetRequired: true
+      Policies:
+        - PolicyName: AllowLaunchInstances
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: LaunchAndManageInstances
+                Effect: Allow
+                Action:
+                  - ec2:RunInstances
+                  - ec2:CreateTags
+                  - ec2:TerminateInstances
+                  - ec2:StopInstances
+                  - ec2:StartInstances
+                Resource: '*'
 
   S3User:
     Type: AWS::IAM::User
