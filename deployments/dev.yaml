@@ -1,9 +1,6 @@
 template-file-path: ./templates/iam-lab.yaml
 parameters: {}
 tags:
-  - key: Environment
-    value: lab
-  - key: Project
-    value: iam-automation-lab
-  - key: Owner
-    value: bonheur.mahoro
+  Environment: lab
+  Project: iam-automation-lab
+  Owner: bonheur.mahoro
