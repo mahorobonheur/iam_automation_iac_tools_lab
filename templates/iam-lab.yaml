@@ -22,6 +22,7 @@ Resources:
       GroupName: iam-lab-s3-group
       ManagedPolicyArns:
         - !Ref S3ListBucketsPolicy
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
 
   EC2UserGroup:
     Type: AWS::IAM::Group
@@ -29,6 +30,7 @@ Resources:
       GroupName: iam-lab-ec2-group
       ManagedPolicyArns:
         - !Ref EC2LabPolicy
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
 
   S3ListBucketsPolicy:
     Type: AWS::IAM::ManagedPolicy
