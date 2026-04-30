@@ -37,7 +37,9 @@ Resources:
               - Effect: Allow
                 Action:
                   - codeconnections:UseConnection
+                  - codeconnections:GetConnection
                   - codestar-connections:UseConnection
+                  - codestar-connections:GetConnection
                 Resource: !Ref ConnectionArn
 
         - PolicyName: ManageCloudFormationStacks
@@ -60,6 +62,7 @@ Resources:
                   - cloudformation:CreateStack
                   - cloudformation:UpdateStack
                   - cloudformation:DeleteStack
+                  - cloudformation:ValidateTemplate
                 Resource: '*'
 
         - PolicyName: DeployIamResources
@@ -93,10 +96,18 @@ Resources:
                   - iam:DeleteGroupPolicy
                   - iam:GetGroupPolicy
                   - iam:ListAttachedGroupPolicies
+                  - iam:PutUserPolicy
+                  - iam:DeleteUserPolicy
+                  - iam:GetUserPolicy
+                  - iam:ListUserPolicies
+                  - iam:ListAttachedUserPolicies
+                  - iam:AttachUserPolicy
+                  - iam:DetachUserPolicy
                   - iam:TagUser
                   - iam:UntagUser
                   - iam:TagPolicy
                   - iam:UntagPolicy
+                  - iam:PassRole
                 Resource: '*'
 
         - PolicyName: ManageOneTimePasswordSecret
@@ -113,6 +124,25 @@ Resources:
                   - secretsmanager:UpdateSecret
                   - secretsmanager:TagResource
                   - secretsmanager:UntagResource
+                Resource: '*'
+
+        - PolicyName: ManageGitSyncEventRules
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:PutRule
+                  - events:PutTargets
+                  - events:DescribeRule
+                  - events:DeleteRule
+                  - events:RemoveTargets
+                  - events:ListRules
+                  - events:ListTargetsByRule
+                  - events:EnableRule
+                  - events:DisableRule
+                  - events:TagResource
+                  - events:UntagResource
                 Resource: '*'
 
 Outputs:
