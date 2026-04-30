@@ -86,6 +86,7 @@ Resources:
                   - iam:GetLoginProfile
                   - iam:CreatePolicy
                   - iam:DeletePolicy
+                  - iam:UpdateGroup
                   - iam:GetPolicy
                   - iam:CreatePolicyVersion
                   - iam:DeletePolicyVersion
