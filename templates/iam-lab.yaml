@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  IAM automation lab stack. Creates one-time password secret, IAM groups with
-  S3 and EC2 permissions, and three IAM users with console access.
+  IAM automation lab stack. Secrets Manager OTP for all users; S3 group lists
+  buckets; EC2 group lists and creates instances; three console users with
+  forced password change on first login.
 
 Resources:
   OneTimePasswordSecret:
@@ -50,7 +51,9 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName: iam-lab-ec2-access-policy
-      Description: Allows describing EC2 resources (read-only) for the EC2 group.
+      Description: >
+        EC2 lab group — list/describe instances (console) and create/manage
+        instances (RunInstances and lifecycle), per lab EC2 group permissions.
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -63,6 +66,18 @@ Resources:
               - ec2:DescribeSecurityGroups
               - ec2:DescribeKeyPairs
               - ec2:DescribeVpcs
+              - ec2:DescribeInstanceTypes
+              - ec2:DescribeAvailabilityZones
+              - ec2:DescribeAccountAttributes
+            Resource: '*'
+          - Sid: CreateAndManageInstances
+            Effect: Allow
+            Action:
+              - ec2:RunInstances
+              - ec2:CreateTags
+              - ec2:TerminateInstances
+              - ec2:StopInstances
+              - ec2:StartInstances
             Resource: '*'
 
   Ec2User1:
@@ -74,6 +89,16 @@ Resources:
       LoginProfile:
         Password: !Sub "{{resolve:secretsmanager:${OneTimePasswordSecret}:SecretString:password}}"
         PasswordResetRequired: true
+      Policies:
+        - PolicyName: DenyRunInstancesForEc2User1
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: DenyLaunchEc2User1Only
+                Effect: Deny
+                Action:
+                  - ec2:RunInstances
+                Resource: '*'
 
   Ec2User2:
     Type: AWS::IAM::User
@@ -84,20 +109,6 @@ Resources:
       LoginProfile:
         Password: !Sub "{{resolve:secretsmanager:${OneTimePasswordSecret}:SecretString:password}}"
         PasswordResetRequired: true
-      Policies:
-        - PolicyName: AllowLaunchInstances
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Sid: LaunchAndManageInstances
-                Effect: Allow
-                Action:
-                  - ec2:RunInstances
-                  - ec2:CreateTags
-                  - ec2:TerminateInstances
-                  - ec2:StopInstances
-                  - ec2:StartInstances
-                Resource: '*'
 
   S3User:
     Type: AWS::IAM::User
@@ -119,7 +130,7 @@ Outputs:
     Value: !Ref S3UserGroup
 
   EC2GroupName:
-    Description: IAM group for EC2 list/create permissions.
+    Description: IAM group whose managed policy allows EC2 list/describe and RunInstances (ec2-user1 has user-level Deny on RunInstances).
     Value: !Ref EC2UserGroup
 
   Ec2User1Name:
