@@ -51,9 +51,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName: iam-lab-ec2-access-policy
-      Description: >
-        EC2 lab group — list/describe instances (console) and create/manage
-        instances (RunInstances and lifecycle), per lab EC2 group permissions.
+      Description: EC2 lab group — list/describe instances (console) and create/manage.
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
